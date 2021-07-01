@@ -9,11 +9,11 @@ const cloudMessaging = admin.messaging();
 
 /* Entry point into the Function */
 exports.triggerNotification = functions.handler.firestore.document
-    .onWrite((change) => {
+    .onWrite(async (change) => {
         const documentData = change.after.data();
         
         try {
-            handleEvent(documentData)
+            await handleEvent(documentData)
         } catch (err) {
             console.log(err);
             return null;
@@ -21,16 +21,16 @@ exports.triggerNotification = functions.handler.firestore.document
     });
 
 /* Helper methods */
-handleEvent = function(data) {
+handleEvent = async function(data) {
     try {
-        const notification = generateNotification(data);
-        sendNotification(notification);
+        const notification = await generateNotification(data);
+        await sendNotification(notification);
     } catch (err) {
         throw (err);
     }
 }
 
-generateNotification = function(data) {
+generateNotification = async function(data) {
     // parse the message from the Firestore document
     /* we assume the record has a structure of 
     {
@@ -82,33 +82,33 @@ generateNotification = function(data) {
     return message;
 }
 
-sendNotification = function(message) {
+sendNotification = async function(messageToSend) {
     // sends a formatted message to the Firebase Cloud Messaging server
 
-    if (message.tokens) {
-        cloudMessaging.sendMulticast(message)
-            .then((response) => {
-                if (response.failureCount > 0) {
-                    const failedTokens = [];
-                    response.responses.forEach((resp, idx) => {
-                    if (!resp.success) {
-                        failedTokens.push(message.tokens[idx]);
-                    }
-                    });
-                    console.log('List of tokens that caused failures: ' + failedTokens);
+    if (messageToSend.tokens) {
+        try {
+            const multicastResponse = await cloudMessaging.sendMulticast(messageToSend);
+            if (multicastResponse.failureCount > 0) {
+                const failedTokens = [];
+                multicastResponse.responses.forEach((resp, idx) => {
+                if (!resp.success) {
+                    failedTokens.push(messageToSend.tokens[idx]);
                 }
-            })
-            .catch((error) => {
-                console.log('Error sending multicast message:', error);
-            });
+                });
+                console.log('List of tokens that caused failures: ' + failedTokens);
+            } else {
+                console.log('Successfully sent message:', multicastResponse);
+            }
+        } catch (err) {
+            throw (err);
+        }
     } else {
-        cloudMessaging.send(message)
-            .then((response) => {
-                console.log('Successfully sent message:', response);
-            })
-            .catch((error) => {
-                console.log('Error sending message:', error);
-            });
+        try {
+            const messageResponse = await cloudMessaging.send(messageToSend);
+            console.log('Successfully sent message:', messageResponse);
+        } catch (err) {
+            throw (err);
+        }
     }
 }
 
