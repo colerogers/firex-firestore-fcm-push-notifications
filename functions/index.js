@@ -1,26 +1,15 @@
 const functions = require("firebase-functions");
 
-// The Firebase Admin SDK to access Firestore.
+// The Firebase Admin SDK to access Firebase Cloud Messaging.
 const admin = require('firebase-admin');
 admin.initializeApp();
 
 // The Firebase Cloud Messaging service
 const cloudMessaging = admin.messaging();
 
-// .document('notifications/{docId}')
+/* Entry point into the Function */
 exports.triggerNotification = functions.handler.firestore.document
-    .onWrite((change, context) => {
-        /* we assume the record has a structure of 
-            {
-                tokens: [ 't1', 't2', ...],
-                title: 'myTitle',
-                body: 'myBody',
-            }
-        */
-        console.log(context.params);
-        const doc = change.after.data();
-        console.log(doc);
-
+    .onWrite((change) => {
         const documentData = change.after.data();
         
         try {
@@ -37,13 +26,12 @@ handleEvent = function(data) {
         const notification = generateNotification(data);
         sendNotification(notification);
     } catch (err) {
-        console.log(err);
-        throw new Error("Failed in handleEvent.");
+        throw (err);
     }
 }
 
 generateNotification = function(data) {
-    // parse the message from the Firestore
+    // parse the message from the Firestore document
     /* we assume the record has a structure of 
     {
         notification: {
@@ -54,6 +42,7 @@ generateNotification = function(data) {
         topic: 'subscription topic'
     }
     */
+    const message = {}  // message to build
 
     // must have title and body 
     if (!data.notification || 
@@ -61,14 +50,12 @@ generateNotification = function(data) {
         !data.notification.body ||
         typeof data.notification.title !== "string" ||
         typeof data.notification.body !== "string") {
-        throw new Error(`Document does not have a 'notification' object with 'title' and 'body' required fields.`);
+        throw new Error(`Document does not have required 'notification' object with 'title' and 'body' fields.`);
     }
 
-    const message = {
-        notification: {
-            title: data.notification.title,
-            body: data.notification.body,
-        }
+    message.notification = {
+        title: data.notification.title,
+        body: data.notification.body,
     };
 
     if (data.deviceTokens && 
@@ -84,27 +71,45 @@ generateNotification = function(data) {
         message.topic = data.topic;
     }
 
+    if (message.tokens === undefined && message.topic === undefined) {
+        throw new Error(`Document must have a valid property: 'deviceTokens' or 'topic'.`);
+    }
+
+    if (message.tokens && message.topic) {
+        throw new Error(`Document must have only one valid property: 'deviceTokens' or 'topic', not both.`);
+    }
+
     return message;
 }
 
 sendNotification = function(message) {
     // sends a formatted message to the Firebase Cloud Messaging server
-    cloudMessaging.send(message)
-        .then((response) => {
-            if (response.failureCount > 0) {
-                const failedTokens = [];
-                response.responses.forEach((resp, idx) => {
-                  if (!resp.success) {
-                    failedTokens.push(registrationTokens[idx]);
-                  }
-                });
-                console.log('List of tokens that caused failures: ' + failedTokens);
-            }
-        })
-        .catch((err) => {
-            console.log("Error: fcm.sendMulticast failed...");
-            console.log(err);
-        });
+
+    if (message.tokens) {
+        cloudMessaging.sendMulticast(message)
+            .then((response) => {
+                if (response.failureCount > 0) {
+                    const failedTokens = [];
+                    response.responses.forEach((resp, idx) => {
+                    if (!resp.success) {
+                        failedTokens.push(message.tokens[idx]);
+                    }
+                    });
+                    console.log('List of tokens that caused failures: ' + failedTokens);
+                }
+            })
+            .catch((error) => {
+                console.log('Error sending multicast message:', error);
+            });
+    } else {
+        cloudMessaging.send(message)
+            .then((response) => {
+                console.log('Successfully sent message:', response);
+            })
+            .catch((error) => {
+                console.log('Error sending message:', error);
+            });
+    }
 }
 
 // TODO: Add ability to send up to 5 topics
