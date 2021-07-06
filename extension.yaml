@@ -14,8 +14,11 @@ author:
 billingRequired: true
 
 roles:
-  - role: firebasedatabase.admin
-    reason: Allows the extension to use the Admin SDK for sending notifications to your Firebase Cloud Messaging Instance.
+  - role: datastore.viewer
+    reason: Allows the extension to view changed documents in the Firestore collection.
+
+  - role: firebasenotifications.admin
+    reason: Required to send push notifications to your Firebase Cloud Messaging Instance.
 
 resources:
   - name: triggerNotification
