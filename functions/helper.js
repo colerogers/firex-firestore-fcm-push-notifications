@@ -1,10 +1,3 @@
-// The Firebase Admin SDK to access Firebase Cloud Messaging.
-const admin = require('firebase-admin');
-admin.initializeApp();
-
-// The Firebase Cloud Messaging service
-const cloudMessaging = admin.messaging();
-
 // The Fetch API
 const fetch = require('node-fetch');
 // The FCM send endpoint
