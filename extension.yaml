@@ -72,3 +72,9 @@ params:
     validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
 
+  - param: FCM_SERVER_KEY
+    label: Firebase Cloud Messaging Server Key
+    description: >-
+      The server key found in your project settings under the cloud messaging tab
+    type: string
+    required: true
