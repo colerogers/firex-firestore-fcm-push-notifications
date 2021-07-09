@@ -27,4 +27,6 @@ Before installing this extension, make sure your Firebase project has both a Fir
 
 * Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* Notification documents collection: What is the path to the collection that contains the documents used to build and send the notifications?
+* Push Notification document collection: What is the path to the collection that contains the documents used to build and send the notifications?
+
+* Firebase Cloud Messaging Server Key: The server key for your Cloud Messaging instance, found in your project settings under the Cloud Messaging Tab.
