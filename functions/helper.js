@@ -5,6 +5,13 @@ admin.initializeApp();
 // The Firebase Cloud Messaging service
 const cloudMessaging = admin.messaging();
 
+// The Fetch API
+const fetch = require('node-fetch');
+// The FCM send endpoint
+const FCMEndpoint = 'https://fcm.googleapis.com/fcm/send';
+// The FCM server key
+const FCMServerKey = `key=${process.env.FCM_SERVER_KEY}`;
+
 /* Helper functions */
 const handleEvent = async (document) => {
     try {
@@ -25,26 +32,47 @@ const sendNotification = async (document) => {
 
     // sends the formatted message to the Firebase Cloud Messaging server
     if (messageToSend.tokens) {
+        // we have tokens
+        sendBody.registration_ids = messageToSend.tokens;
         try {
-            const multicastResponse = await cloudMessaging.sendMulticast(messageToSend);
-            if (multicastResponse.failureCount > 0) {
-                const failedTokens = [];
-                multicastResponse.responses.forEach((resp, idx) => {
-                if (!resp.success) {
-                    failedTokens.push(messageToSend.tokens[idx]);
+            const response = await fetch(FCMEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(sendBody),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': FCMServerKey
                 }
-                });
-                console.log('List of tokens that caused failures: ' + failedTokens);
-            } else {
-                console.log('Successfully sent message:', multicastResponse);
+            });
+            const result = await response.json();
+
+            console.log(result);
+
+            if (result.error) {
+                throw new Error(result.error);
             }
         } catch (err) {
             throw (err);
         }
     } else {
+        // we have a topic
+        sendBody.to = '/topics/' + messageToSend.topic;
+
         try {
-            const messageResponse = await cloudMessaging.send(messageToSend);
-            console.log('Successfully sent message:', messageResponse);
+            const response = await fetch(FCMEndpoint, { 
+                method: 'POST', 
+                body: JSON.stringify(sendBody),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': FCMServerKey
+                }
+                });
+            const result = await response.json();
+
+            console.log(result);
+
+            if (result.error) {
+                throw new Error(result.error);
+            }
         } catch (err) {
             throw (err);
         }
