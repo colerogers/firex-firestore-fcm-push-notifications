@@ -69,8 +69,8 @@ describe("Unit tests", () => {
             topic: 'topic'
         };
         const res = myFunctions.generateNotification(data);
-        expect(res.tokens).to.eq(undefined);
-        expect(res.topic).to.eq('topic');
+        expect(res.registration_ids).to.eq(undefined);
+        expect(res.to).to.eq('/topics/topic');
     });
 
     it("should not have tokens, array length 0", async () => {
@@ -80,8 +80,8 @@ describe("Unit tests", () => {
             topic: 'topic'
         };
         const res = myFunctions.generateNotification(data);
-        expect(res.tokens).to.eq(undefined);
-        expect(res.topic).to.eq('topic');
+        expect(res.registration_ids).to.eq(undefined);
+        expect(res.to).to.eq('/topics/topic');
     });
 
     it("should not have tokens, array of ints", async () => {
@@ -91,8 +91,8 @@ describe("Unit tests", () => {
             topic: 'topic'
         };
         const res = myFunctions.generateNotification(data);
-        expect(res.tokens).to.eq(undefined);
-        expect(res.topic).to.eq('topic');
+        expect(res.registration_ids).to.eq(undefined);
+        expect(res.to).to.eq('/topics/topic');
     });
 
     it("should have tokens, valid message", async () => {
@@ -101,10 +101,10 @@ describe("Unit tests", () => {
             deviceTokens: ['t1','t2']
         };
         const res = myFunctions.generateNotification(data);
-        expect(res.topic).to.eq(undefined);
-        expect(res.tokens.length).to.eq(2);
-        expect(res.tokens[0]).to.eq('t1');
-        expect(res.tokens[1]).to.eq('t2');
+        expect(res.to).to.eq(undefined);
+        expect(res.registration_ids.length).to.eq(2);
+        expect(res.registration_ids[0]).to.eq('t1');
+        expect(res.registration_ids[1]).to.eq('t2');
     });
 
     it("should have topic, valid message", async () => {
@@ -113,7 +113,7 @@ describe("Unit tests", () => {
             topic: 'topic'
         };
         const res = myFunctions.generateNotification(data);
-        expect(res.tokens).to.eq(undefined);
-        expect(res.topic).to.eq('topic');
+        expect(res.registration_ids).to.eq(undefined);
+        expect(res.to).to.eq('/topics/topic');
     });
 });

@@ -1,9 +1,9 @@
-// The Firebase Admin SDK to access Firebase Cloud Messaging.
-const admin = require('firebase-admin');
-admin.initializeApp();
-
-// The Firebase Cloud Messaging service
-const cloudMessaging = admin.messaging();
+// The Fetch API
+const fetch = require('node-fetch');
+// The FCM send endpoint
+const FCMEndpoint = 'https://fcm.googleapis.com/fcm/send';
+// The FCM server key
+const FCMServerKey = `key=${process.env.FCM_SERVER_KEY}`;
 
 /* Helper functions */
 const handleEvent = async (document) => {
@@ -23,31 +23,24 @@ const sendNotification = async (document) => {
         throw (err);
     }
 
-    // sends the formatted message to the Firebase Cloud Messaging server
-    if (messageToSend.tokens) {
-        try {
-            const multicastResponse = await cloudMessaging.sendMulticast(messageToSend);
-            if (multicastResponse.failureCount > 0) {
-                const failedTokens = [];
-                multicastResponse.responses.forEach((resp, idx) => {
-                if (!resp.success) {
-                    failedTokens.push(messageToSend.tokens[idx]);
-                }
-                });
-                console.log('List of tokens that caused failures: ' + failedTokens);
-            } else {
-                console.log('Successfully sent message:', multicastResponse);
+    try {
+        const response = await fetch(FCMEndpoint, {
+            method: 'POST',
+            body: JSON.stringify(messageToSend),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': FCMServerKey
             }
-        } catch (err) {
-            throw (err);
+        });
+        const result = await response.json();
+
+        console.log(result);
+
+        if (result.error) {
+            throw new Error(result.error);
         }
-    } else {
-        try {
-            const messageResponse = await cloudMessaging.send(messageToSend);
-            console.log('Successfully sent message:', messageResponse);
-        } catch (err) {
-            throw (err);
-        }
+    } catch (err) {
+        throw (err);
     }
 };
 
@@ -84,19 +77,19 @@ const generateNotification = (data) => {
         data.deviceTokens.length > 0 &&
         data.deviceTokens.find((item) => typeof item !== "string") === undefined) {
         // deviceTokens is a non-empty array of all strings
-        message.tokens = data.deviceTokens;
+        message.registration_ids = data.deviceTokens;
     }
 
     if (data.topic &&
         typeof data.topic === "string") {
-        message.topic = data.topic;
+        message.to = '/topics/' + data.topic;
     }
 
-    if (message.tokens === undefined && message.topic === undefined) {
+    if (message.registration_ids === undefined && message.to === undefined) {
         throw new Error(`Document must have a valid property: 'deviceTokens' or 'topic'.`);
     }
 
-    if (message.tokens && message.topic) {
+    if (message.registration_ids && message.to) {
         throw new Error(`Document must have only one valid property: 'deviceTokens' or 'topic', not both.`);
     }
 
