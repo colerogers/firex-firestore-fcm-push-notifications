@@ -13,6 +13,7 @@
 import * as functions from 'firebase-functions';
 import * as messagingHelper from './messagingHelper';
 
+/*
 exports.greetTheWorld = functions.handler.https.onRequest((req, res) => {
   // Here we reference a user-provided parameter (its value is provided by the user during installation)
   const consumerProvidedGreeting = process.env.GREETING;
@@ -24,10 +25,9 @@ exports.greetTheWorld = functions.handler.https.onRequest((req, res) => {
 
   res.send(greeting);
 });
+*/
 
-exports.triggerNotification = functions.handler.firestore.document.onWrite(async (change) => {
-    // const documentData = change.after.data();
-    
+exports.triggerNotification = functions.handler.firestore.document.onWrite(async (change) => {    
     try {
         const result = await messagingHelper.executeDocumentChange(change);
         return result;
